@@ -43,14 +43,17 @@
 
         .toti {
             position: absolute;
-            /* 1280x1280을 6x6로 나눈다면 각 구역은 약 213x213 */
-            /* 4,5 자리는 x축 4번째(66.7%), y축 5번째(83.3%) */
-            top: 83.3%;
-            left: 66.7%;
+            /* 기본 위치를 살짝 위로, 왼쪽으로 조정 */
+            top: 80%;
+            left: 63%;
             transform: translate(-50%, -50%);
             transition: opacity 0.1s ease-in-out;
-            width: 15.5%;
+            width: 12%; /* 토티일 때 작은 크기 */
             height: auto;
+        }
+
+        .toti.enhanced {
+            width: 15.5%; /* 강화 상태일 때 원래 크기 */
         }
 
         .controls {
@@ -196,6 +199,16 @@
             imgElement.style.opacity = '0';
             setTimeout(() => {
                 imgElement.src = newSrc;
+                
+                // 토티인지 강화 상태인지 확인해서 클래스 추가/제거
+                if (newSrc.includes('sedc3pc3jrzw9gddrj03g')) {
+                    // 토티 기본 이미지
+                    imgElement.classList.remove('enhanced');
+                } else {
+                    // 강화 이미지
+                    imgElement.classList.add('enhanced');
+                }
+                
                 imgElement.style.opacity = '1';
             }, 50);
         }
