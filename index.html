@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FC 모바일 강화 시뮬레이션</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="card" id="card">
+            <img src="https://www.dropbox.com/scl/fi/bjzvly49t75x7nuzqjzdh/1722659085642.png?rlkey=vxmhz6rhxtpbnjk2wrwn2t75n&st=h24wo6ab&raw=1" alt="기본 이미지" class="image"> <!-- 빈 카드 이미지 -->
+            <img src="https://www.dropbox.com/scl/fi/sedc3pc3jrzw9gddrj03g/.png?rlkey=4i800pev6ugy9tas5htmzx3ph&st=sln56ut1&raw=1" alt="토티" class="toti" id="toti" style="width: 15.5%; height: auto;"> <!-- 초기 이미지 -->
+        </div>
+
+        <div class="controls">
+            <select id="enhancementLevel" onchange="updateImage()">
+                <option value="0">도전할 강화 단계 선택</option>
+                <option value="1">1강</option>
+                <option value="2">2강</option>
+                <option value="3">3강</option>
+                <option value="4">4강</option>
+                <option value="5">5강</option>
+                <option value="6">6강</option>
+                <option value="7">7강</option>
+                <option value="8">8강</option>
+                <option value="9">9강</option>
+                <option value="10">10강</option>
+            </select>
+
+            <button id="enhanceButton" onclick="enhance()">강화 시도</button>
+            <label style="color: white;">
+                <input type="checkbox" id="fixedCheckbox"> 강화 실패 시 유지
+            </label>
+        </div>
+    </div>
+
+    <script>
+        const successRates = {
+            1: 100,
+            2: 81,
+            3: 81,
+            4: 61,
+            5: 61,
+            6: 41,
+            7: 41,
+            8: 41,
+            9: 35,
+            10: 30
+        };
+
+        // 각 강화 단계에 대한 이미지 URL을 미리 정의
+        const imageLinks = {
+            1: 'https://www.dropbox.com/scl/fi/fhpw9sl2ua87fldvo60gd/1.png?rlkey=r515nvwx19y56jvkvsaq82si8&st=tghyci0i&raw=1',
+            2: 'https://www.dropbox.com/scl/fi/kpsl72sj04uu2no6rptgu/2.png?rlkey=wscx11lkyaqctfehbrlxgzjai&st=fujeg7iq&raw=1',
+            3: 'https://www.dropbox.com/scl/fi/jr6qzunups805rqbmqwmr/3.png?rlkey=9w8dfyr5jp04pxwj187pzevt9&st=5jusuxfc&raw=1',
+            4: 'https://www.dropbox.com/scl/fi/kj7ky2hytwthdcpnkz68s/4.png?rlkey=fotrs7rfd28bn4ichmax56cpw&st=sfovb4y4&raw=1',
+            5: 'https://www.dropbox.com/scl/fi/nse3bm0lunb85qiby35d5/5.png?rlkey=8sdqen5fey301avnmmj28bqri&st=t77q0htz&raw=1',
+            6: 'https://www.dropbox.com/scl/fi/33b2lgr3r4a4ncgkxtt1s/6.png?rlkey=2awc7ognxqakq8yio8c83jans&st=7k5vbt5n&raw=1',
+            7: 'https://www.dropbox.com/scl/fi/i6wehbygpl5brnlyt6hpo/7.png?rlkey=r3r3wu6q7ea1v48z43hu6djja&st=fbq01utg&raw=1',
+            8: 'https://www.dropbox.com/scl/fi/okdwebp4ueerkqjwjv2sj/8.png?rlkey=fws9c0gu7fyrz5damthty71nf&st=kl4lu5cp&raw=1',
+            9: 'https://www.dropbox.com/scl/fi/ioy67t26bdd6chaiyf5gm/9.png?rlkey=jgozllflp13vchvtwj68y4hy9&st=hc54mfre&raw=1',
+            10: 'https://www.dropbox.com/scl/fi/hwtpznjbw3xblchpnwlu2/10.png?rlkey=fwunvuh91hfzqq8hfb1etlet2&st=e60lah03&raw=1'
+        };
+
+        function updateImage() {
+            const levelSelect = document.getElementById('enhancementLevel');
+            const selectedLevel = parseInt(levelSelect.value);
+            const totiImage = document.getElementById('toti');
+
+            // 선택한 단계의 전 단계 이미지로 변경
+            if (selectedLevel > 1) {
+                const previousLevel = selectedLevel - 1; // 전 단계
+                totiImage.src = imageLinks[previousLevel]; // 전 단계 이미지로 설정
+            } else if (selectedLevel === 1) {
+                totiImage.src = imageLinks[1]; // 1강 이미지로 설정
+            } else {
+                totiImage.src = 'https://example.com/myimages.png'; // 기본 이미지로 설정
+            }
+        }
+
+        function enhance() {
+            const levelSelect = document.getElementById('enhancementLevel');
+            let selectedLevel = parseInt(levelSelect.value);
+            const fixedCheckbox = document.getElementById('fixedCheckbox');
+
+            if (selectedLevel === 0) {
+                return; // 선택하지 않은 경우 아무 작업도 하지 않음
+            }
+
+            const successRate = successRates[selectedLevel];
+            const randomValue = Math.random() * 100; // 0 ~ 100 사이의 랜덤 값 생성
+
+            // 강화 성공
+            if (randomValue < successRate) {
+                const imageLink = imageLinks[selectedLevel]; // 현재 n강 이미지
+                document.getElementById('toti').src = imageLink; // 성공 시 이미지 유지
+                selectedLevel = Math.min(selectedLevel + 1, 10); // 드롭다운 단계 업데이트 (n+1강)
+                levelSelect.value = selectedLevel; // 드롭다운에서 n+1강으로 변경
+
+                // 10강에 도달했을 때 버튼 변경
+                if (selectedLevel === 11) {
+                    const enhanceButton = document.getElementById('enhanceButton');
+                    enhanceButton.innerText = '초기화'; // 버튼 텍스트 변경
+                    enhanceButton.setAttribute('onclick', 'resetGame()'); // 초기화 함수로 변경
+                }
+            } else {
+                // 강화 실패
+                if (!fixedCheckbox.checked) {
+                    const newLevel = Math.max(selectedLevel - 2, 1); // n-2강으로 설정
+                    const previousLevel = Math.max(selectedLevel - 1, 1); // n-1강으로 설정
+                    document.getElementById('toti').src = imageLinks[newLevel]; // n-2강 이미지로 변경
+                    levelSelect.value = previousLevel; // n-1강으로 변경
+                } 
+                // 실패 시 메시지 표시하지 않음
+            }
+        }
+
+        function resetGame() {
+            if (confirm("진짜 초기화 하시겠습니까?")) {
+                const levelSelect = document.getElementById('enhancementLevel');
+                levelSelect.value = 0; // 드롭다운 초기화
+                              document.getElementById('toti').src = 'https://www.dropbox.com/scl/fi/sedc3pc3jrzw9gddrj03g/.png?rlkey=4i800pev6ugy9tas5htmzx3ph&st=sln56ut1&raw=1'; // 기본 이미지로 되돌리기
+                const enhanceButton = document.getElementById('enhanceButton');
+                enhanceButton.innerText = '강화 시도'; // 버튼 텍스트를 원래대로 복원
+                enhanceButton.setAttribute('onclick', 'enhance()'); // 초기화 버튼의 클릭 이벤트를 강화 함수로 복원
+            }
+        }
+    </script>
+  made by Fcm(이하준)
+</body>
+</html>
