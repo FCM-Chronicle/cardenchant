@@ -4,13 +4,120 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FC 모바일 강화 시뮬레이션</title>
-    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1a1a1a;
+            color: white;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+        }
+
+        .card {
+            position: relative;
+            margin-bottom: 30px;
+            width: 300px;
+            height: 400px;
+            margin: 0 auto 30px;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        .image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .toti {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            transition: opacity 0.1s ease-in-out; /* 빠른 전환 */
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: center;
+        }
+
+        select, button {
+            padding: 12px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            background-color: #333;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #555;
+        }
+
+        select:hover {
+            background-color: #555;
+        }
+
+        label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: white;
+            font-size: 14px;
+        }
+
+        input[type="checkbox"] {
+            transform: scale(1.2);
+        }
+
+        /* 로딩 표시 */
+        .loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        .success-effect {
+            animation: successGlow 0.5s ease-out;
+        }
+
+        .fail-effect {
+            animation: failShake 0.5s ease-out;
+        }
+
+        @keyframes successGlow {
+            0% { box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+            50% { box-shadow: 0 4px 30px rgba(0,255,0,0.5); }
+            100% { box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+        }
+
+        @keyframes failShake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+    </style>
 </head>
 <body>
     <div class="container">
         <div class="card" id="card">
-            <img src="https://www.dropbox.com/scl/fi/bjzvly49t75x7nuzqjzdh/1722659085642.png?rlkey=vxmhz6rhxtpbnjk2wrwn2t75n&st=h24wo6ab&raw=1" alt="기본 이미지" class="image"> <!-- 빈 카드 이미지 -->
-            <img src="https://www.dropbox.com/scl/fi/sedc3pc3jrzw9gddrj03g/.png?rlkey=4i800pev6ugy9tas5htmzx3ph&st=sln56ut1&raw=1" alt="토티" class="toti" id="toti" style="width: 15.5%; height: auto;"> <!-- 초기 이미지 -->
+            <img src="https://www.dropbox.com/scl/fi/bjzvly49t75x7nuzqjzdh/1722659085642.png?rlkey=vxmhz6rhxtpbnjk2wrwn2t75n&st=h24wo6ab&raw=1" alt="기본 이미지" class="image">
+            <img src="https://www.dropbox.com/scl/fi/sedc3pc3jrzw9gddrj03g/.png?rlkey=4i800pev6ugy9tas5htmzx3ph&st=sln56ut1&raw=1" alt="토티" class="toti" id="toti" style="width: 15.5%; height: auto;">
         </div>
 
         <div class="controls">
@@ -49,7 +156,6 @@
             10: 30
         };
 
-        // 각 강화 단계에 대한 이미지 URL을 미리 정의
         const imageLinks = {
             1: 'https://www.dropbox.com/scl/fi/fhpw9sl2ua87fldvo60gd/1.png?rlkey=r515nvwx19y56jvkvsaq82si8&st=tghyci0i&raw=1',
             2: 'https://www.dropbox.com/scl/fi/kpsl72sj04uu2no6rptgu/2.png?rlkey=wscx11lkyaqctfehbrlxgzjai&st=fujeg7iq&raw=1',
@@ -63,70 +169,110 @@
             10: 'https://www.dropbox.com/scl/fi/hwtpznjbw3xblchpnwlu2/10.png?rlkey=fwunvuh91hfzqq8hfb1etlet2&st=e60lah03&raw=1'
         };
 
+        // 이미지 미리 로드를 위한 객체 생성
+        const preloadedImages = {};
+        
+        // 페이지 로드 시 모든 이미지를 미리 로드
+        window.addEventListener('load', function() {
+            for (let level in imageLinks) {
+                const img = new Image();
+                img.src = imageLinks[level];
+                preloadedImages[level] = img;
+            }
+        });
+
         function updateImage() {
             const levelSelect = document.getElementById('enhancementLevel');
             const selectedLevel = parseInt(levelSelect.value);
             const totiImage = document.getElementById('toti');
 
-            // 선택한 단계의 전 단계 이미지로 변경
             if (selectedLevel > 1) {
-                const previousLevel = selectedLevel - 1; // 전 단계
-                totiImage.src = imageLinks[previousLevel]; // 전 단계 이미지로 설정
+                const previousLevel = selectedLevel - 1;
+                changeImageFast(totiImage, imageLinks[previousLevel]);
             } else if (selectedLevel === 1) {
-                totiImage.src = imageLinks[1]; // 1강 이미지로 설정
+                changeImageFast(totiImage, imageLinks[1]);
             } else {
-                totiImage.src = 'https://example.com/myimages.png'; // 기본 이미지로 설정
+                changeImageFast(totiImage, 'https://www.dropbox.com/scl/fi/sedc3pc3jrzw9gddrj03g/.png?rlkey=4i800pev6ugy9tas5htmzx3ph&st=sln56ut1&raw=1');
             }
+        }
+
+        // 빠른 이미지 변경 함수
+        function changeImageFast(imgElement, newSrc) {
+            // 미리 로드된 이미지가 있다면 즉시 변경
+            imgElement.style.opacity = '0';
+            setTimeout(() => {
+                imgElement.src = newSrc;
+                imgElement.style.opacity = '1';
+            }, 50);
         }
 
         function enhance() {
             const levelSelect = document.getElementById('enhancementLevel');
             let selectedLevel = parseInt(levelSelect.value);
             const fixedCheckbox = document.getElementById('fixedCheckbox');
+            const card = document.getElementById('card');
+            const enhanceButton = document.getElementById('enhanceButton');
 
             if (selectedLevel === 0) {
-                return; // 선택하지 않은 경우 아무 작업도 하지 않음
+                return;
             }
+
+            // 버튼 비활성화
+            enhanceButton.disabled = true;
+            enhanceButton.textContent = '강화 중...';
 
             const successRate = successRates[selectedLevel];
-            const randomValue = Math.random() * 100; // 0 ~ 100 사이의 랜덤 값 생성
+            const randomValue = Math.random() * 100;
 
-            // 강화 성공
-            if (randomValue < successRate) {
-                const imageLink = imageLinks[selectedLevel]; // 현재 n강 이미지
-                document.getElementById('toti').src = imageLink; // 성공 시 이미지 유지
-                selectedLevel = Math.min(selectedLevel + 1, 10); // 드롭다운 단계 업데이트 (n+1강)
-                levelSelect.value = selectedLevel; // 드롭다운에서 n+1강으로 변경
+            // 짧은 지연 후 결과 처리 (애니메이션 효과)
+            setTimeout(() => {
+                if (randomValue < successRate) {
+                    // 강화 성공
+                    card.classList.add('success-effect');
+                    const imageLink = imageLinks[selectedLevel];
+                    changeImageFast(document.getElementById('toti'), imageLink);
+                    selectedLevel = Math.min(selectedLevel + 1, 10);
+                    levelSelect.value = selectedLevel;
 
-                // 10강에 도달했을 때 버튼 변경
-                if (selectedLevel === 11) {
-                    const enhanceButton = document.getElementById('enhanceButton');
-                    enhanceButton.innerText = '초기화'; // 버튼 텍스트 변경
-                    enhanceButton.setAttribute('onclick', 'resetGame()'); // 초기화 함수로 변경
+                    if (selectedLevel === 11) {
+                        enhanceButton.textContent = '초기화';
+                        enhanceButton.setAttribute('onclick', 'resetGame()');
+                    }
+                } else {
+                    // 강화 실패
+                    card.classList.add('fail-effect');
+                    if (!fixedCheckbox.checked) {
+                        const newLevel = Math.max(selectedLevel - 2, 1);
+                        const previousLevel = Math.max(selectedLevel - 1, 1);
+                        changeImageFast(document.getElementById('toti'), imageLinks[newLevel]);
+                        levelSelect.value = previousLevel;
+                    }
                 }
-            } else {
-                // 강화 실패
-                if (!fixedCheckbox.checked) {
-                    const newLevel = Math.max(selectedLevel - 2, 1); // n-2강으로 설정
-                    const previousLevel = Math.max(selectedLevel - 1, 1); // n-1강으로 설정
-                    document.getElementById('toti').src = imageLinks[newLevel]; // n-2강 이미지로 변경
-                    levelSelect.value = previousLevel; // n-1강으로 변경
-                } 
-                // 실패 시 메시지 표시하지 않음
-            }
+
+                // 애니메이션 효과 제거 및 버튼 재활성화
+                setTimeout(() => {
+                    card.classList.remove('success-effect', 'fail-effect');
+                    enhanceButton.disabled = false;
+                    if (enhanceButton.textContent === '강화 중...') {
+                        enhanceButton.textContent = '강화 시도';
+                    }
+                }, 500);
+            }, 100);
         }
 
         function resetGame() {
             if (confirm("진짜 초기화 하시겠습니까?")) {
                 const levelSelect = document.getElementById('enhancementLevel');
-                levelSelect.value = 0; // 드롭다운 초기화
-                              document.getElementById('toti').src = 'https://www.dropbox.com/scl/fi/sedc3pc3jrzw9gddrj03g/.png?rlkey=4i800pev6ugy9tas5htmzx3ph&st=sln56ut1&raw=1'; // 기본 이미지로 되돌리기
+                levelSelect.value = 0;
+                changeImageFast(document.getElementById('toti'), 'https://www.dropbox.com/scl/fi/sedc3pc3jrzw9gddrj03g/.png?rlkey=4i800pev6ugy9tas5htmzx3ph&st=sln56ut1&raw=1');
                 const enhanceButton = document.getElementById('enhanceButton');
-                enhanceButton.innerText = '강화 시도'; // 버튼 텍스트를 원래대로 복원
-                enhanceButton.setAttribute('onclick', 'enhance()'); // 초기화 버튼의 클릭 이벤트를 강화 함수로 복원
+                enhanceButton.textContent = '강화 시도';
+                enhanceButton.setAttribute('onclick', 'enhance()');
             }
         }
     </script>
-  made by Fcm(이하준)
+    <div style="position: fixed; bottom: 10px; right: 10px; color: #666; font-size: 12px;">
+        made by Fcm(이하준)
+    </div>
 </body>
 </html>
